@@ -26,10 +26,11 @@ export function useERP() {
   // System notifications state
   const [notifications, setNotifications] = useState([
     { id: 1, text: "Furnace #1 temperature stabilised at 1,565°C.", time: "10m ago", type: "info" },
-    { id: 2, text: "QC alert: Raw Limestone batch #9008 rejected due to high moisture.", time: "1h ago", type: "alert" },
+    { id: 2, text: "QC alert: Raw Limestone batch #9008 rejected due to high moisture.", time: "1h ago", type: "error" },
     { id: 3, text: "Breakdown logged: Diamond cutting CNC vertical guide issue resolved.", time: "3h ago", type: "success" }
   ]);
   const [showNotifications, setShowNotifications] = useState(false);
+  const [toast, setToast] = useState(null);
 
   // Trigger reactive update
   const refreshState = () => setDbStateVersion(prev => prev + 1);
@@ -43,6 +44,9 @@ export function useERP() {
       type
     };
     setNotifications(prev => [entry, ...prev]);
+    
+    // Trigger on-screen Toast
+    setToast({ id: Date.now(), text, type });
   };
 
   // Get current active schema
@@ -93,10 +97,10 @@ export function useERP() {
       refreshState();
       addNotification(`CREATED: [${result.id}] successfully in ${activeSection} > ${activeSub}.`, 'success');
       if (result.warning) {
-        addNotification(result.warning, 'alert');
+        addNotification(result.warning, 'info');
       }
     } else {
-      addNotification(`CREATE FAILED: ${result.error}`, 'alert');
+      addNotification(`CREATE FAILED: ${result.error}`, 'error');
     }
     return result;
   };
@@ -112,7 +116,7 @@ export function useERP() {
       refreshState();
       addNotification(`UPDATED: [${id}] changes written in ${activeSection} > ${activeSub}.`, 'success');
     } else {
-      addNotification(`UPDATE FAILED: ${result.error}`, 'alert');
+      addNotification(`UPDATE FAILED: ${result.error}`, 'error');
     }
     return result;
   };
@@ -126,10 +130,9 @@ export function useERP() {
     
     if (result.success) {
       refreshState();
-      // Use warning type for deletion actions
-      addNotification(`DELETED: [${id}] removed from database.`, 'alert');
+      addNotification(`DELETED: [${id}] removed from database successfully.`, 'success');
     } else {
-      addNotification(`DELETE REJECTED: ${result.error}`, 'alert');
+      addNotification(`DELETE REJECTED: ${result.error}`, 'error');
     }
     return result;
   };
@@ -164,6 +167,8 @@ export function useERP() {
     showNotifications,
     setShowNotifications,
     addNotification,
+    toast,
+    setToast,
 
     // Navigation
     activeSection,

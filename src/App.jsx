@@ -1,6 +1,6 @@
 import React, { useState } from 'react';
 import { 
-  Users, ShoppingCart, Package, Cpu, Award, Wrench, Truck, DollarSign, BarChart3 
+  Users, ShoppingCart, Package, Cpu, Award, Wrench, Truck, DollarSign, BarChart3, X
 } from 'lucide-react';
 import { useERP } from './presentation/hooks/useERP';
 import Sidebar from './presentation/components/Sidebar';
@@ -12,6 +12,7 @@ import CRUDModal from './presentation/components/CRUDModal';
 import ProcessTrackingView from './presentation/components/ProcessTrackingView';
 import CostingView from './presentation/components/CostingView';
 import BackupModal from './presentation/components/BackupModal';
+import DeleteConfirmModal from './presentation/components/DeleteConfirmModal';
 import './App.css';
 
 // Menu mapping matching the outline structure
@@ -71,6 +72,22 @@ export default function App() {
   const [sidebarCollapsed, setSidebarCollapsed] = useState(false);
   const [isBackupOpen, setIsBackupOpen] = useState(false);
   const [jsonBackupContent, setJsonBackupContent] = useState('');
+
+  // Delete Confirmation states
+  const [deleteModalOpen, setDeleteModalOpen] = useState(false);
+  const [deleteModalId, setDeleteModalId] = useState(null);
+
+  // Intercept delete trigger
+  const handleOpenDelete = (id) => {
+    setDeleteModalId(id);
+    setDeleteModalOpen(true);
+  };
+
+  const handleConfirmDelete = () => {
+    erp.deleteRecord(deleteModalId);
+    setDeleteModalOpen(false);
+    setDeleteModalId(null);
+  };
 
   // Handle local user login
   const handleLoginSuccess = () => {
@@ -198,7 +215,7 @@ export default function App() {
         list={erp.filteredEntities}
         handleOpenCreate={handleOpenCreate}
         handleOpenEdit={handleOpenEdit}
-        deleteRecord={erp.deleteRecord}
+        deleteRecord={handleOpenDelete}
       />
     );
   };
@@ -263,6 +280,28 @@ export default function App() {
         onCopyToClipboard={handleCopyToClipboard}
         onDownloadBackup={handleDownloadBackup}
       />
+
+      {/* 5. Delete Confirmation Modal */}
+      <DeleteConfirmModal 
+        isOpen={deleteModalOpen}
+        onClose={() => setDeleteModalOpen(false)}
+        onConfirm={handleConfirmDelete}
+        entityId={deleteModalId}
+        moduleName={erp.activeSection}
+        subviewName={erp.activeSub}
+      />
+
+      {/* 6. On-screen Toast system */}
+      {erp.toast && (
+        <div className="toast-container">
+          <div className={`toast toast-${erp.toast.type}`}>
+            <div className="toast-content">{erp.toast.text}</div>
+            <button className="toast-close" onClick={() => erp.setToast(null)}>
+              <X size={14} />
+            </button>
+          </div>
+        </div>
+      )}
     </div>
   );
 }
